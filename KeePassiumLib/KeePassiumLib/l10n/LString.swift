@@ -139,6 +139,12 @@ public enum LString {
             value: "This is an older database format, some data might be lost.",
             comment: "Notification when user tries to copy data from KDBX to older KDB database."
         )
+        public static let offlineChangesNotMergedTemplate = NSLocalizedString(
+            "[Database/OfflineChanges/NotMerged/warning]",
+            bundle: Bundle.framework,
+            value: "Changes you made while offline could not be merged into this database: %@\n\nThey are kept on this device, and will be shown whenever the original file is unreachable.",
+            comment: "Warning when offline changes could not be combined with the database. [reason: String]"
+        )
     }
 
 

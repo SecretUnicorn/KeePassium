@@ -65,6 +65,9 @@ public class DatabaseManager {
     }
 
     public static func getFallbackFile(for databaseRef: URLReference) -> URLReference? {
+        if let offlineChangesRef = OfflineChangesStore.shared.getReference(for: databaseRef) {
+            return offlineChangesRef
+        }
         let latestBackupURL = FileKeeper.shared.getBackupFileURL(
             nameTemplate: databaseRef.visibleFileName,
             mode: .overwriteLatest,

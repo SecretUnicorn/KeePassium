@@ -12,6 +12,8 @@ public class DatabaseFile: Eraseable {
         case readOnly
         case localFallback
         case useStreams
+        /// The database contains changes that are saved only offline (not uploaded yet).
+        case hasUnsyncedOfflineChanges
     }
     public typealias Status = Set<StatusFlag>
 
@@ -113,6 +115,14 @@ public class DatabaseFile: Eraseable {
                 Diag.error("Failed to resolve file reference [message: \(fileAccessError.localizedDescription)]")
             }
             completion()
+        }
+    }
+
+    internal func setStatus(_ flag: StatusFlag, _ isOn: Bool) {
+        if isOn {
+            status.insert(flag)
+        } else {
+            status.remove(flag)
         }
     }
 

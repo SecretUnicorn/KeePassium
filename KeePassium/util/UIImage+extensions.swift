@@ -118,6 +118,7 @@ public enum SymbolName: String, Equatable {
     case heart = "heart"
     case iCloud = "icloud"
     case iCloudSlash = "icloud.slash"
+    case iCloudArrowUp = "icloud.and.arrow.up"
     case infoCircle = "info.circle"
     case iPad = "ipad"
     case iPadHomeButton = "ipad.homebutton"

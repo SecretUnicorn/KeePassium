@@ -20,6 +20,8 @@ extension DatabaseViewerCoordinator {
         let status = _databaseFile.status
         if status.contains(.localFallback) {
             announcements.append(makeFallbackDatabaseAnnouncement(for: _topGroupViewer))
+        } else if status.contains(.hasUnsyncedOfflineChanges) {
+            announcements.append(makeUnsyncedOfflineChangesAnnouncement())
         } else if status.contains(.readOnly) {
             announcements.append(makeReadOnlyDatabaseAnnouncement(for: _topGroupViewer))
         }
@@ -141,11 +143,53 @@ extension DatabaseViewerCoordinator {
         case .none:
             recoveryAction = nil
         }
+        if _canEditDatabase,
+           OfflineChangesStore.shared.isEligible(originalRef)
+        {
+            let hasPendingChanges = OfflineChangesStore.shared.hasPendingChanges(for: originalRef)
+            let body = [originalRef.error?.errorDescription, LString.offlineChangesPendingMessage]
+                .compactMap { $0 }
+                .joined(separator: "\n\n")
+            return AnnouncementItem(
+                title: LString.databaseIsFallbackCopy,
+                body: body,
+                image: .symbol(hasPendingChanges ? .iCloudArrowUp : .iCloudSlash),
+                action: UIAction(
+                    title: LString.actionSyncNow,
+                    handler: { [weak self] _ in
+                        Diag.info("Will reload database to sync offline changes")
+                        self?._reloadDatabase()
+                    }
+                )
+            )
+        }
         return AnnouncementItem(
             title: LString.databaseIsFallbackCopy,
             body: originalRef.error?.errorDescription,
             image: .symbol(.iCloudSlash),
             action: recoveryAction
+        )
+    }
+
+    private func makeUnsyncedOfflineChangesAnnouncement() -> AnnouncementItem {
+        let syncAction: UIAction?
+        if _canEditDatabase {
+            syncAction = UIAction(
+                title: LString.actionSyncNow,
+                handler: { [weak self] _ in
+                    guard let self else { return }
+                    Diag.info("Will upload offline changes on user request")
+                    saveDatabase(_databaseFile)
+                }
+            )
+        } else {
+            syncAction = nil
+        }
+        return AnnouncementItem(
+            title: LString.offlineChangesNotUploadedTitle,
+            body: LString.offlineChangesNotUploadedMessage,
+            image: .symbol(.iCloudArrowUp, tint: .warningMessage),
+            action: syncAction
         )
     }
 
