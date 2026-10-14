@@ -261,6 +261,8 @@ extension RemoteFileExportCoordinator: ConnectionTypePickerDelegate {
                  .synology,
                  .woelkli:
                 startWebDAVSetup(connectionType: connectionType, stateIndicator: viewController)
+            case .ftp:
+                startFTPSetup()
             case .oneDrivePersonal(let scope), .oneDriveForBusiness(let scope):
                 startOneDriveSetup(scope: scope, stateIndicator: viewController)
             case .dropboxPersonal(let scope), .dropboxBusiness(let scope):
@@ -390,6 +392,78 @@ extension RemoteFileExportCoordinator: OneDriveConnectionSetupCoordinatorDelegat
             stateIndicator: stateIndicator,
             alertPresenter: coordinator
         )
+    }
+}
+
+extension RemoteFileExportCoordinator: FTPConnectionSetupCoordinatorDelegate {
+    private func startFTPSetup() {
+        let setupCoordinator = FTPConnectionSetupCoordinator(mode: .pick(.folder), router: _router)
+        setupCoordinator.delegate = self
+        setupCoordinator.start()
+        addChildCoordinator(setupCoordinator, onDismiss: nil)
+    }
+
+    func didPickRemoteFile(
+        url: URL,
+        credential: NetworkCredential,
+        in coordinator: FTPConnectionSetupCoordinator
+    ) {
+        assertionFailure("Expected didPickRemoteFolder instead")
+    }
+
+    func didPickRemoteFolder(
+        url folderURL: URL,
+        credential: NetworkCredential,
+        stateIndicator: BusyStateIndicating?,
+        in coordinator: FTPConnectionSetupCoordinator
+    ) {
+        let fileURL = folderURL.appendingPathComponent(fileName, isDirectory: false)
+        let timeout = Timeout(duration: FileDataProvider.defaultTimeoutDuration)
+        let doUpload = { [weak self, weak stateIndicator, weak coordinator] in
+            guard let self else { return }
+            stateIndicator?.indicateState(isBusy: true)
+            FTPManager.shared.uploadFile(
+                data: data,
+                url: fileURL,
+                credential: credential,
+                timeout: timeout,
+                completionQueue: .main
+            ) { [weak self, weak stateIndicator, weak coordinator] result in
+                guard let self else { return }
+                stateIndicator?.indicateState(isBusy: false)
+                switch result {
+                case .success:
+                    Diag.debug("File created successfully on FTP")
+                    delegate?.didFinishExport(
+                        to: FTPFileURL.build(nakedURL: fileURL),
+                        credential: credential,
+                        in: self
+                    )
+                case .failure(let error):
+                    Diag.debug("Failed to upload file to FTP [message: \(error.localizedDescription)]")
+                    coordinator?.showErrorAlert(error)
+                }
+            }
+        }
+
+        stateIndicator?.indicateState(isBusy: true)
+        FTPManager.shared.getFileInfo(
+            url: fileURL,
+            credential: credential,
+            timeout: timeout,
+            completionQueue: .main
+        ) { [weak self, weak stateIndicator, weak coordinator] result in
+            guard let self, let coordinator else { return }
+            stateIndicator?.indicateState(isBusy: false)
+            switch result {
+            case .success:
+                coordinator.showOverwriteConfirmation(fileName: fileName, onConfirm: { _ in
+                    doUpload()
+                })
+            case .failure:
+                doUpload()
+            }
+        }
     }
 }
 

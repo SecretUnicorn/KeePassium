@@ -62,6 +62,8 @@ final class RemoteFilePickerCoordinator: BaseCoordinator {
         switch fileProvider {
         case .keepassiumWebDAV:
             return .genericWebDAV
+        case .keepassiumFTP:
+            return .ftp
         case .keepassiumDropboxPersonal:
             return .dropboxPersonal(scope: .fullAccess)
         case .keepassiumDropboxPersonalAppFolder:
@@ -115,6 +117,8 @@ extension RemoteFilePickerCoordinator: ConnectionTypePickerDelegate {
              .synology,
              .woelkli:
             startWebDAVSetup(connectionType: connectionType, stateIndicator: viewController)
+        case .ftp:
+            startFTPSetup()
         case .oneDrivePersonal(let scope), .oneDriveForBusiness(let scope):
             startOneDriveSetup(scope: scope, stateIndicator: viewController)
         case .dropboxPersonal(let scope), .dropboxBusiness(let scope):
@@ -159,6 +163,33 @@ extension RemoteFilePickerCoordinator: WebDAVConnectionSetupCoordinatorDelegate 
         in coordinator: WebDAVConnectionSetupCoordinator
     ) {
         assertionFailure("Expected didPickRemoteItem instead")
+    }
+}
+
+extension RemoteFilePickerCoordinator: FTPConnectionSetupCoordinatorDelegate {
+    private func startFTPSetup() {
+        let setupCoordinator = FTPConnectionSetupCoordinator(mode: mode, router: _router)
+        setupCoordinator.delegate = self
+        setupCoordinator.start()
+        addChildCoordinator(setupCoordinator, onDismiss: nil)
+    }
+
+    func didPickRemoteFile(
+        url: URL,
+        credential: NetworkCredential,
+        in coordinator: FTPConnectionSetupCoordinator
+    ) {
+        delegate?.didPickRemoteFile(url: url, credential: credential, in: self)
+        dismiss()
+    }
+
+    func didPickRemoteFolder(
+        url: URL,
+        credential: NetworkCredential,
+        stateIndicator: BusyStateIndicating?,
+        in coordinator: FTPConnectionSetupCoordinator
+    ) {
+        assertionFailure("Expected didPickRemoteFile instead")
     }
 }
 

@@ -37,7 +37,7 @@ final class SyncConflictAlert: UIViewController, Refreshable {
         static let option = "optionCell"
     }
 
-    public let options: [Decision] =
+    public private(set) var options: [Decision] =
         [.overwriteRemote, .saveAs, .cancelSaving]
 
     typealias Completion = ((_ decision: Decision) -> Void)
@@ -71,6 +71,11 @@ final class SyncConflictAlert: UIViewController, Refreshable {
 
     public func setData(local: DatabaseFile, remote: URL) {
         localFileInfo = local.fileReference?.getCachedInfoSync(canFetch: false)
+        if local.database is Database2 {
+            options = [.merge, .overwriteRemote, .saveAs, .cancelSaving]
+        } else {
+            options = [.overwriteRemote, .saveAs, .cancelSaving]
+        }
         refresh()
         infoRefreshQueue.async { [self] in
             FileDataProvider.readFileInfo(
@@ -250,7 +255,6 @@ extension SyncConflictAlert: UITableViewDataSource {
             cell.textLabel?.font = .preferredFont(forTextStyle: .body)
             cell.textLabel?.text = LString.conflictResolutionMergeAction
             cell.detailTextLabel?.text = LString.conflictResolutionMergeDescription
-            fatalError("Not implemented yet")
         case .cancelSaving:
             cell.textLabel?.textColor = .actionTint
             cell.textLabel?.font = .preferredFont(forTextStyle: .body).withWeight(.semibold)

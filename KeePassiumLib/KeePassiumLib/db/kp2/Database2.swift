@@ -138,7 +138,7 @@ public class Database2: Database {
     public var defaultUserName: String { return meta.defaultUserName }
     private var cipherKey = SecureBytes.empty()
     private var hmacKey = SecureBytes.empty()
-    private var deletedObjects: ContiguousArray<DeletedObject2> = []
+    internal var deletedObjects: ContiguousArray<DeletedObject2> = []
 
     override public var keyHelper: KeyHelper { return _keyHelper }
     private let _keyHelper = KeyHelper2()

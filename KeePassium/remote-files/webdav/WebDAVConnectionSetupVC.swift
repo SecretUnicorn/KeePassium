@@ -412,7 +412,7 @@ extension WebDAVConnectionSetupVC {
         }
 
         let inputURLScheme = inputURL.scheme ?? ""
-        guard WebDAVFileURL.schemes.contains(inputURLScheme) else {
+        guard config.allowedSchemes.contains(inputURLScheme) else {
             config.serverURL = nil
             refreshDoneButton()
             return

@@ -15,6 +15,7 @@ public final class DatabaseLoadingWarnings {
         case databaseFileIsInTrash(fileName: String)
         case temporaryBackupDatabase
         case lesserTargetFormat
+        case offlineChangesNotMerged(reason: String)
 
         public var priority: Int {
             switch self {
@@ -25,7 +26,8 @@ public final class DatabaseLoadingWarnings {
                  .missingBinaries:
                 return 20
             case .temporaryBackupDatabase,
-                 .lesserTargetFormat:
+                 .lesserTargetFormat,
+                 .offlineChangesNotMerged:
                 return 30
             case .databaseFileIsInTrash:
                 return 40
@@ -41,7 +43,8 @@ public final class DatabaseLoadingWarnings {
                 return true
             case .databaseFileIsInTrash,
                  .temporaryBackupDatabase,
-                 .lesserTargetFormat:
+                 .lesserTargetFormat,
+                 .offlineChangesNotMerged:
                 return false
             }
         }
@@ -73,6 +76,8 @@ public final class DatabaseLoadingWarnings {
                 return "temporaryBackupDatabase"
             case .lesserTargetFormat:
                 return "lesserTargetFormat"
+            case .offlineChangesNotMerged:
+                return "offlineChangesNotMerged"
             }
         }
 
@@ -111,6 +116,11 @@ public final class DatabaseLoadingWarnings {
                 return LString.Warning.temporaryBackupDatabase
             case .lesserTargetFormat:
                 return LString.Warning.lesserTargetDatabaseFormat
+            case .offlineChangesNotMerged(let reason):
+                return String.localizedStringWithFormat(
+                    LString.Warning.offlineChangesNotMergedTemplate,
+                    reason
+                )
             }
         }
     }

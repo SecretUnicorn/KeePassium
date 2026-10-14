@@ -123,8 +123,7 @@ extension DatabaseSaving {
             case .overwriteRemote:
                 completion(.overwrite(local.data))
             case .merge:
-                assertionFailure("Not implemented")
-                completion(.cancel)
+                completion(.merge)
             case .saveAs:
                 completion(.considerExported)
                 self.databaseSaver = nil 

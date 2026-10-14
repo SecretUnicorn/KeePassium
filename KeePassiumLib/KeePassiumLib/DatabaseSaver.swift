@@ -40,6 +40,8 @@ public class DatabaseSaver: ProgressObserver {
     public enum ConflictResolutionStrategy {
         case overwrite(_ resolvedData: ByteArray)
 
+        case merge
+
         case considerExported
 
         case cancel
@@ -170,6 +172,14 @@ public class DatabaseSaver: ProgressObserver {
             return
         }
 
+        if databaseFile.status.contains(.localFallback),
+           OfflineChangesStore.shared.isEligible(databaseFile.originalReference)
+        {
+            Diag.info("Working on a fallback copy, saving changes offline")
+            saveOffline(outData)
+            return
+        }
+
         Diag.info("Checking original database for out-of-band changes")
         progress.status = LString.Progress.checkingDatabaseForModifications
         let phase2Timeout = Timeout(duration: timeoutDuration)
@@ -189,6 +199,11 @@ public class DatabaseSaver: ProgressObserver {
                         remoteURL: databaseFile.fileURL
                     )
                 case .failure(let fileAccessError):
+                    if canSaveOffline(after: fileAccessError) {
+                        Diag.warning("Original file is unreachable, saving changes offline [message: \(fileAccessError.localizedDescription)]")
+                        saveOffline(outData)
+                        return
+                    }
                     Diag.error("Failed to read database, cancelling")
                     finalize(withError: fileAccessError)
                 }
@@ -218,6 +233,8 @@ public class DatabaseSaver: ProgressObserver {
             case .overwrite(let resolvedData):
                 databaseFile.setData(resolvedData, updateHash: false)
                 phase3_startWritingRemoteDatabase(resolvedData: resolvedData)
+            case .merge:
+                phase2_mergeWithRemote(remoteData: remoteData)
             case .considerExported:
                 Diag.info("Database will be saved to a different file.")
                 performPostSaveTasks(savedData: databaseFile.data)
@@ -228,6 +245,72 @@ public class DatabaseSaver: ProgressObserver {
                 finalize(withError: nil)
             }
         }
+    }
+
+    private func canSaveOffline(after error: FileAccessError) -> Bool {
+        guard OfflineChangesStore.shared.isEligible(databaseFile.originalReference) else {
+            return false
+        }
+        switch error {
+        case .networkError, .timeout, .fileProviderDoesNotRespond, .networkAccessDenied:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func saveOffline(_ data: ByteArray) {
+        assert(operationQueue.isCurrent)
+        progress.status = LString.Progress.writingDatabaseFile
+        do {
+            try OfflineChangesStore.shared.save(data, for: databaseFile.originalReference)
+        } catch {
+            Diag.error("Failed to save changes offline [message: \(error.localizedDescription)]")
+            finalize(withError: error)
+            return
+        }
+        databaseFile.setData(data, updateHash: false)
+        databaseFile.setStatus(.hasUnsyncedOfflineChanges, true)
+        do {
+            try databaseFile.removeAppliedPendingOperations()
+        } catch {
+            Diag.error("Failed to remove pending operations, they can overwrite data on next reload")
+        }
+        if relatedTasks.contains(.updateQuickAutoFill) {
+            updateQuickAutoFillStorage()
+        }
+        progress.status = LString.Progress.done
+        progress.completedUnitCount = ProgressSteps.didWriteDatabase
+        notifyDidSaveDatabase()
+        finalize(withError: nil)
+    }
+
+    private func phase2_mergeWithRemote(remoteData: ByteArray) {
+        assert(operationQueue.isCurrent)
+        guard let database2 = databaseFile.database as? Database2 else {
+            Diag.error("Merging is only supported for KDBX databases")
+            finalize(withError: DatabaseError.saveError(reason: LString.Error.mergeNotSupported))
+            return
+        }
+
+        Diag.info("Merging with the remote database")
+        progress.status = LString.Progress.mergingDatabases
+        let mergedData: ByteArray
+        do {
+            try database2.merge(remoteData: remoteData, fileName: databaseFile.visibleFileName)
+            mergedData = try database2.save()
+        } catch {
+            Diag.error("Failed to merge databases [message: \(error.localizedDescription)]")
+            finalize(withError: DatabaseError.saveError(
+                reason: String.localizedStringWithFormat(
+                    LString.Error.mergeFailedTemplate,
+                    error.localizedDescription
+                )
+            ))
+            return
+        }
+        databaseFile.setData(mergedData, updateHash: false)
+        phase3_startWritingRemoteDatabase(resolvedData: mergedData)
     }
 
     private func phase3_startWritingRemoteDatabase(resolvedData: ByteArray) {
@@ -251,11 +334,21 @@ public class DatabaseSaver: ProgressObserver {
                     progress.completedUnitCount = ProgressSteps.didWriteDatabase
 
                     databaseFile.setData(databaseFile.data, updateHash: true)
+                    if databaseFile.status.contains(.hasUnsyncedOfflineChanges) {
+                        Diag.info("Offline changes have been uploaded")
+                        OfflineChangesStore.shared.clearPendingChanges(for: databaseFile.originalReference)
+                        databaseFile.setStatus(.hasUnsyncedOfflineChanges, false)
+                    }
 
                     performPostSaveTasks(savedData: databaseFile.data)
                     notifyDidSaveDatabase()
                     finalize(withError: nil)
                 case .failure(let fileAccessError):
+                    if canSaveOffline(after: fileAccessError) {
+                        Diag.warning("Failed to write the original file, saving changes offline [message: \(fileAccessError.localizedDescription)]")
+                        saveOffline(resolvedData)
+                        return
+                    }
                     Diag.error("Failed to write database, cancelling")
                     finalize(withError: fileAccessError)
                 }

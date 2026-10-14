@@ -45,6 +45,7 @@ extension LString {
     public static let connectionTypeQNAP = "QNAP"
     public static let connectionTypeSynology = "Synology"
     public static let connectionTypeWebDAV = "WebDAV"
+    public static let connectionTypeFTP = "FTP/FTPS"
     public static let connectionTypeWoelkli = "Woelkli"
 
     public static let connectionTypeOneDrive = "OneDrive"

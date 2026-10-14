@@ -23,3 +23,5 @@ KeePassium.xcodeproj/xcshareddata/
 
 # License verification files
 KeePassiumLib/KeePassiumLib/resources/licensing/v1-proofs.sha256
+
+*.profraw

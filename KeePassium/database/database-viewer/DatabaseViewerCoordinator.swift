@@ -238,6 +238,15 @@ extension DatabaseViewerCoordinator {
             return
         }
 
+        if _databaseFile.status.contains(.hasUnsyncedOfflineChanges),
+           !_databaseFile.status.contains(.localFallback),
+           _canEditDatabase
+        {
+            Diag.info("Will upload changes made offline")
+            saveDatabase(_databaseFile)
+            return
+        }
+
         if _maybeApplyAndSavePendingChanges(recoveryMode: false) {
             return
         }

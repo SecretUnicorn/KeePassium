@@ -26,6 +26,7 @@ public enum FileProvider: Hashable {
         "com.apple.CloudDocs.MobileDocumentsFileProvider": .iCloudDriveLegacy,
         "com.imagam.ifiles2.docsfileprovider": .imagamIFiles,
         "com.keepassium.fileprovider.webdav": .keepassiumWebDAV,
+        "com.keepassium.fileprovider.ftp": .keepassiumFTP,
         "com.keepassium.fileprovider.onedrive": .keepassiumOneDriveLegacy,
         "com.keepassium.fileprovider.onedrive.personal": .keepassiumOneDrivePersonal,
         "com.keepassium.fileprovider.onedrive.personal.appfolder": .keepassiumOneDrivePersonalAppFolder,
@@ -76,6 +77,7 @@ public enum FileProvider: Hashable {
     case iCloudDriveLegacy
     case imagamIFiles
     case keepassiumWebDAV
+    case keepassiumFTP
 
     case keepassiumOneDriveLegacy
     case keepassiumOneDrivePersonal
@@ -191,6 +193,8 @@ public enum FileProvider: Hashable {
             return "iFiles"
         case .keepassiumWebDAV:
             return LString.connectionTypeWebDAV
+        case .keepassiumFTP:
+            return LString.connectionTypeFTP
         case .keepassiumOneDriveLegacy:
             assertionFailure("Unrecognized OneDrive type. Should be either Personal or Business instead")
             return LString.connectionTypeOneDrive
@@ -379,6 +383,7 @@ public enum FileProvider: Hashable {
     public var isInAppFileProvider: Bool {
         switch self {
         case .keepassiumWebDAV,
+             .keepassiumFTP,
              .keepassiumOneDriveLegacy,
              .keepassiumOneDrivePersonal,
              .keepassiumOneDrivePersonalAppFolder,

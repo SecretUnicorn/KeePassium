@@ -549,6 +549,26 @@ extension LString {
         value: "The database is read-only",
         comment: "Message shown if current database cannot be edited"
     )
+    public static let offlineChangesPendingMessage = NSLocalizedString(
+        "[Database/OfflineChanges/Pending/text]",
+        bundle: Bundle.framework,
+        value: "You can keep editing. Changes are saved on this device and will be merged into the original when it is reachable again.",
+        comment: "Message shown while working offline on a local copy of a database.")
+    public static let offlineChangesNotUploadedTitle = NSLocalizedString(
+        "[Database/OfflineChanges/NotUploaded/title]",
+        bundle: Bundle.framework,
+        value: "Changes not uploaded yet",
+        comment: "Title of a notice: some database changes are saved only on this device.")
+    public static let offlineChangesNotUploadedMessage = NSLocalizedString(
+        "[Database/OfflineChanges/NotUploaded/text]",
+        bundle: Bundle.framework,
+        value: "Some changes are saved only on this device, because the original file was unreachable.",
+        comment: "Message: some database changes are saved only on this device.")
+    public static let actionSyncNow = NSLocalizedString(
+        "[Database/OfflineChanges/SyncNow/action]",
+        bundle: Bundle.framework,
+        value: "Sync Now",
+        comment: "Action: try to upload changes saved offline to the original database file.")
     public static let databaseIsFallbackCopy = NSLocalizedString(
         "[Database/Loading/FromCache/text]",
         bundle: Bundle.framework,

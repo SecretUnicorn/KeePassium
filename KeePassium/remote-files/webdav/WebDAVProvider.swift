@@ -33,6 +33,24 @@ struct WebDAVProvider {
     let allowsAnonymous: Bool
     let helpURL: URL?
     let helpButtonTitle: String?
+    var allowedSchemes: [String] = WebDAVFileURL.schemes
+
+    static let ftp: WebDAVProvider = {
+        var provider = WebDAVProvider(
+            displayName: LString.connectionTypeFTP,
+            defaultServerURL: nil,
+            serverURLPlaceholder: "ftp://host:port/path/file.kdbx",
+            showsServerURL: true,
+            showsAllowUntrusted: true,
+            showsFullURL: false,
+            pathPrefix: nil,
+            allowsAnonymous: true,
+            helpURL: nil,
+            helpButtonTitle: nil
+        )
+        provider.allowedSchemes = FTPFileURL.schemes
+        return provider
+    }()
 
     static let genericWebDAV = WebDAVProvider(
         displayName: LString.connectionTypeWebDAV,
@@ -234,7 +252,7 @@ struct WebDAVProvider {
     }
 
     init(from connectionType: RemoteConnectionType) {
-        assert(connectionType.fileProvider == .keepassiumWebDAV)
+        assert([.keepassiumWebDAV, .keepassiumFTP].contains(connectionType.fileProvider))
         switch connectionType {
         case .genericWebDAV: self = .genericWebDAV
         case .genericHTTP: self = .genericHTTP
@@ -248,6 +266,7 @@ struct WebDAVProvider {
         case .qnap: self = .qnap
         case .synology: self = .synology
         case .woelkli: self = .woelkli
+        case .ftp: self = .ftp
         default:
             assertionFailure("Unmapped WebDAV service: \(connectionType)")
             self = .genericWebDAV

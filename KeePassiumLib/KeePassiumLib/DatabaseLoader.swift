@@ -494,6 +494,7 @@ public class DatabaseLoader: ProgressObserver {
             Diag.info("Database loaded OK")
 
             addFileLocationWarnings(to: warnings)
+            maybeMergeOfflineChanges(into: dbFile, warnings: warnings)
             applyPendingOperations(dbFile, warnings: warnings)
             performAfterLoadTasks(dbFile)
 
@@ -570,6 +571,31 @@ public class DatabaseLoader: ProgressObserver {
                 nameTemplate: dbFile.visibleFileName,
                 mode: .renameLatest,
                 contents: dbFile.data)
+        }
+    }
+
+    private func maybeMergeOfflineChanges(into dbFile: DatabaseFile, warnings: DatabaseLoadingWarnings) {
+        assert(operationQueue.isCurrent)
+        let store = OfflineChangesStore.shared
+        guard !status.contains(.localFallback),
+              store.hasPendingChanges(for: originalDatabaseRef)
+        else {
+            return
+        }
+        Diag.info("Found offline changes, merging them into the loaded database")
+        do {
+            guard let database2 = dbFile.database as? Database2 else {
+                throw DatabaseError.saveError(reason: LString.Error.mergeNotSupported)
+            }
+            guard let offlineData = try store.loadPendingChanges(for: originalDatabaseRef) else {
+                return
+            }
+            let stats = try database2.merge(remoteData: offlineData, fileName: dbFile.visibleFileName)
+            dbFile.setStatus(.hasUnsyncedOfflineChanges, true)
+            Diag.info("Offline changes merged [\(stats)]")
+        } catch {
+            Diag.error("Failed to merge offline changes [message: \(error.localizedDescription)]")
+            warnings.addIssue(.offlineChangesNotMerged(reason: error.localizedDescription))
         }
     }
 

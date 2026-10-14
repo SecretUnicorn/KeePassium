@@ -32,6 +32,7 @@ public enum RemoteConnectionType: Hashable {
         .synology,
         .genericWebDAV,
         .woelkli,
+        .ftp,
     ]
 
     case oneDrivePersonal(scope: OAuthScope)
@@ -52,6 +53,7 @@ public enum RemoteConnectionType: Hashable {
     case qnap
     case synology
     case woelkli
+    case ftp
 }
 
 extension RemoteConnectionType: CustomStringConvertible {
@@ -123,6 +125,8 @@ extension RemoteConnectionType: CustomStringConvertible {
             return LString.connectionTypeSynology
         case .woelkli:
             return LString.connectionTypeWoelkli
+        case .ftp:
+            return LString.connectionTypeFTP
         }
     }
 
@@ -190,6 +194,8 @@ extension RemoteConnectionType: CustomStringConvertible {
              .synology,
              .woelkli:
             return .keepassiumWebDAV
+        case .ftp:
+            return .keepassiumFTP
         }
     }
 }
@@ -211,7 +217,8 @@ extension RemoteConnectionType {
              .owncloud,
              .qnap,
              .synology,
-             .woelkli:
+             .woelkli,
+             .ftp:
             return false
         case .oneDriveForBusiness,
              .dropboxBusiness,

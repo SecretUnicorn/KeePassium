@@ -87,6 +87,30 @@ public enum LString {
             value: "Please select path to a folder",
             comment: "Error shown when user selects a file path instead of folder path in WebDAV."
         )
+        public static let mergeNotSupported = NSLocalizedString(
+            "[Database/Merge/NotSupported]",
+            bundle: Bundle.framework,
+            value: "Merging is only supported for KeePass 2 (.kdbx) databases.",
+            comment: "Error message when the user tries to merge an older-format database."
+        )
+        public static let mergeFailedTemplate = NSLocalizedString(
+            "[Database/Merge/Failed/template]",
+            bundle: Bundle.framework,
+            value: "Could not merge with the current version of the file: %@",
+            comment: "Error message when merging databases failed. [errorDescription: String]"
+        )
+        public static let ftpPathNeedsFile = NSLocalizedString(
+            "[FTP/Pick/NeedsFile]",
+            bundle: Bundle.framework,
+            value: "Please enter the full path to the database file, for example ftp://host/folder/database.kdbx",
+            comment: "Error shown when user enters a folder path instead of a file path for an FTP connection."
+        )
+        public static let ftpExportNeedsFolder = NSLocalizedString(
+            "[FTP/Export/NeedsFolder]",
+            bundle: Bundle.framework,
+            value: "Please enter the path to a folder, ending with a slash, for example ftp://host/folder/",
+            comment: "Error shown when user enters a file path instead of a folder path for FTP export."
+        )
     }
 
 
@@ -114,6 +138,12 @@ public enum LString {
             bundle: Bundle.framework,
             value: "This is an older database format, some data might be lost.",
             comment: "Notification when user tries to copy data from KDBX to older KDB database."
+        )
+        public static let offlineChangesNotMergedTemplate = NSLocalizedString(
+            "[Database/OfflineChanges/NotMerged/warning]",
+            bundle: Bundle.framework,
+            value: "Changes you made while offline could not be merged into this database: %@\n\nThey are kept on this device, and will be shown whenever the original file is unreachable.",
+            comment: "Warning when offline changes could not be combined with the database. [reason: String]"
         )
     }
 
@@ -154,6 +184,11 @@ public enum LString {
             bundle: Bundle.framework,
             value: "Resolving a sync conflict…",
             comment: "Database saving status: deciding how to handle conflicting changes.")
+        static let mergingDatabases = NSLocalizedString(
+            "[Database/Progress/mergingDatabases]",
+            bundle: Bundle.framework,
+            value: "Merging changes…",
+            comment: "Database saving status: combining our changes with changes made on another device.")
         static let writingDatabaseFile = NSLocalizedString(
             "[Database/Progress/writingDatabaseFile]",
             bundle: Bundle.framework,

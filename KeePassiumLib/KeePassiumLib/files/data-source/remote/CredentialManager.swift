@@ -175,21 +175,35 @@ public final class NetworkCredential: Codable {
 public final class CredentialManager {
     public static let shared = CredentialManager()
 
+    /// Builds without a signing identity (e.g. ad-hoc local Mac builds) cannot access the keychain
+    /// (errSecMissingEntitlement). Only in that case, credentials are kept in memory for the session.
+    private var sessionOnlyCredentials = [URL: NetworkCredential]()
+    private let sessionOnlyLock = NSLock()
+
     private init() {
     }
 
     public func get(for url: URL) -> NetworkCredential? {
         do {
-            return try Keychain.shared.getNetworkCredential(for: url)
+            if let credential = try Keychain.shared.getNetworkCredential(for: url) {
+                return credential
+            }
         } catch {
             Diag.error("Failed to get network credential [message: \(error.localizedDescription)]")
-            return nil
         }
+        sessionOnlyLock.lock()
+        defer { sessionOnlyLock.unlock() }
+        return sessionOnlyCredentials[url]
     }
 
     public func store(credential: NetworkCredential, for url: URL) {
         do {
             try Keychain.shared.store(networkCredential: credential, for: url)
+        } catch KeychainError.generic(let code) where code == Int(errSecMissingEntitlement) {
+            Diag.warning("Keychain is not available in this build, keeping the network credential in memory for this session only")
+            sessionOnlyLock.lock()
+            sessionOnlyCredentials[url] = credential
+            sessionOnlyLock.unlock()
         } catch {
             Diag.error("Failed to store network credential [message: \(error.localizedDescription)]")
         }
@@ -201,6 +215,9 @@ public final class CredentialManager {
         } catch {
             Diag.error("Failed to remove network credential [message: \(error.localizedDescription)]")
         }
+        sessionOnlyLock.lock()
+        sessionOnlyCredentials[url] = nil
+        sessionOnlyLock.unlock()
     }
 
     public func removeAll() {
@@ -209,5 +226,8 @@ public final class CredentialManager {
         } catch {
             Diag.error("Failed to remove network credentials [message: \(error.localizedDescription)]")
         }
+        sessionOnlyLock.lock()
+        sessionOnlyCredentials.removeAll()
+        sessionOnlyLock.unlock()
     }
 }

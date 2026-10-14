@@ -48,7 +48,8 @@ extension RemoteConnectionType {
                  .owncloud,
                  .qnap,
                  .synology,
-                 .woelkli:
+                 .woelkli,
+                 .ftp:
                 return self == .other
             }
         }
