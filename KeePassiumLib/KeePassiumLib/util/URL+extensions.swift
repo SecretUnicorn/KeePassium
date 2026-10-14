@@ -234,6 +234,8 @@ public extension URL {
     func getRemoteLocationDescription() -> String? {
         if isWebDAVFileURL {
             return WebDAVFileURL.getDescription(for: self)
+        } else if isFTPFileURL {
+            return FTPFileURL.getDescription(for: self)
         } else if isOneDrivePersonalFileURL || isOneDriveBusinessFileURL {
             return self.getOneDriveLocationDescription()
         } else if isDropboxPersonalFileURL || isDropboxBusinessFileURL {

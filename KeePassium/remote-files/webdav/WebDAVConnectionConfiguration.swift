@@ -20,6 +20,9 @@ struct WebDAVConnectionSetupConfig {
     var showsServerURLField: Bool {
         provider.showsServerURL
     }
+    var allowedSchemes: [String] {
+        provider.allowedSchemes
+    }
     var showsAllowUntrusted: Bool {
         provider.showsAllowUntrusted
     }

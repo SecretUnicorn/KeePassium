@@ -17,6 +17,8 @@ internal final class DataSourceFactory {
         switch detectedFileProvider {
         case .keepassiumWebDAV:
             return WebDAVDataSource()
+        case .keepassiumFTP:
+            return FTPDataSource()
         case .keepassiumOneDrivePersonal,
              .keepassiumOneDrivePersonalAppFolder,
              .keepassiumOneDriveBusiness,
@@ -38,6 +40,8 @@ internal final class DataSourceFactory {
     public static func findInAppFileProvider(for url: URL) -> FileProvider? {
         if url.isWebDAVFileURL {
             return .keepassiumWebDAV
+        } else if url.isFTPFileURL {
+            return .keepassiumFTP
         } else if url.isDropboxPersonalFileURL {
             if url.isDropboxAppFolderScopedURL {
                 return .keepassiumDropboxPersonalAppFolder

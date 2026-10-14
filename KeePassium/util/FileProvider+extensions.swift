@@ -26,6 +26,8 @@ extension FileProvider {
             return .iCloud
         case .keepassiumWebDAV:
             return .fileProviderWebDAV
+        case .keepassiumFTP:
+            return .network
         case .keepassiumOneDrivePersonal,
              .keepassiumOneDrivePersonalAppFolder,
              .keepassiumOneDriveBusiness,

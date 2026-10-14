@@ -87,6 +87,18 @@ public enum LString {
             value: "Please select path to a folder",
             comment: "Error shown when user selects a file path instead of folder path in WebDAV."
         )
+        public static let ftpPathNeedsFile = NSLocalizedString(
+            "[FTP/Pick/NeedsFile]",
+            bundle: Bundle.framework,
+            value: "Please enter the full path to the database file, for example ftp://host/folder/database.kdbx",
+            comment: "Error shown when user enters a folder path instead of a file path for an FTP connection."
+        )
+        public static let ftpExportNeedsFolder = NSLocalizedString(
+            "[FTP/Export/NeedsFolder]",
+            bundle: Bundle.framework,
+            value: "Please enter the path to a folder, ending with a slash, for example ftp://host/folder/",
+            comment: "Error shown when user enters a file path instead of a folder path for FTP export."
+        )
     }
 
 
