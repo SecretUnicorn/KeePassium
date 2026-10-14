@@ -12,9 +12,9 @@ public class DeletedObject2: Eraseable {
     private(set) var uuid: UUID
     private(set) var deletionTime: Date
 
-    init(uuid: UUID) {
+    init(uuid: UUID, deletionTime: Date = Date.now) {
         self.uuid = uuid
-        self.deletionTime = Date.now
+        self.deletionTime = deletionTime
     }
     convenience init() {
         self.init(uuid: UUID.ZERO)

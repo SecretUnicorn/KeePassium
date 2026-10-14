@@ -40,6 +40,8 @@ public class DatabaseSaver: ProgressObserver {
     public enum ConflictResolutionStrategy {
         case overwrite(_ resolvedData: ByteArray)
 
+        case merge
+
         case considerExported
 
         case cancel
@@ -218,6 +220,8 @@ public class DatabaseSaver: ProgressObserver {
             case .overwrite(let resolvedData):
                 databaseFile.setData(resolvedData, updateHash: false)
                 phase3_startWritingRemoteDatabase(resolvedData: resolvedData)
+            case .merge:
+                phase2_mergeWithRemote(remoteData: remoteData)
             case .considerExported:
                 Diag.info("Database will be saved to a different file.")
                 performPostSaveTasks(savedData: databaseFile.data)
@@ -228,6 +232,34 @@ public class DatabaseSaver: ProgressObserver {
                 finalize(withError: nil)
             }
         }
+    }
+
+    private func phase2_mergeWithRemote(remoteData: ByteArray) {
+        assert(operationQueue.isCurrent)
+        guard let database2 = databaseFile.database as? Database2 else {
+            Diag.error("Merging is only supported for KDBX databases")
+            finalize(withError: DatabaseError.saveError(reason: LString.Error.mergeNotSupported))
+            return
+        }
+
+        Diag.info("Merging with the remote database")
+        progress.status = LString.Progress.mergingDatabases
+        let mergedData: ByteArray
+        do {
+            try database2.merge(remoteData: remoteData, fileName: databaseFile.visibleFileName)
+            mergedData = try database2.save()
+        } catch {
+            Diag.error("Failed to merge databases [message: \(error.localizedDescription)]")
+            finalize(withError: DatabaseError.saveError(
+                reason: String.localizedStringWithFormat(
+                    LString.Error.mergeFailedTemplate,
+                    error.localizedDescription
+                )
+            ))
+            return
+        }
+        databaseFile.setData(mergedData, updateHash: false)
+        phase3_startWritingRemoteDatabase(resolvedData: mergedData)
     }
 
     private func phase3_startWritingRemoteDatabase(resolvedData: ByteArray) {

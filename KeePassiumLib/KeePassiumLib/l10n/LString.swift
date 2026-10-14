@@ -87,6 +87,18 @@ public enum LString {
             value: "Please select path to a folder",
             comment: "Error shown when user selects a file path instead of folder path in WebDAV."
         )
+        public static let mergeNotSupported = NSLocalizedString(
+            "[Database/Merge/NotSupported]",
+            bundle: Bundle.framework,
+            value: "Merging is only supported for KeePass 2 (.kdbx) databases.",
+            comment: "Error message when the user tries to merge an older-format database."
+        )
+        public static let mergeFailedTemplate = NSLocalizedString(
+            "[Database/Merge/Failed/template]",
+            bundle: Bundle.framework,
+            value: "Could not merge with the current version of the file: %@",
+            comment: "Error message when merging databases failed. [errorDescription: String]"
+        )
         public static let ftpPathNeedsFile = NSLocalizedString(
             "[FTP/Pick/NeedsFile]",
             bundle: Bundle.framework,
@@ -166,6 +178,11 @@ public enum LString {
             bundle: Bundle.framework,
             value: "Resolving a sync conflict…",
             comment: "Database saving status: deciding how to handle conflicting changes.")
+        static let mergingDatabases = NSLocalizedString(
+            "[Database/Progress/mergingDatabases]",
+            bundle: Bundle.framework,
+            value: "Merging changes…",
+            comment: "Database saving status: combining our changes with changes made on another device.")
         static let writingDatabaseFile = NSLocalizedString(
             "[Database/Progress/writingDatabaseFile]",
             bundle: Bundle.framework,
